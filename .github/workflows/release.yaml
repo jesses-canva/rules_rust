@@ -137,7 +137,7 @@ jobs:
       - name: Detect the current version
         id: version
         run: |
-          version="$(grep 'VERSION =' ${{ github.workspace }}/version.bzl | grep -o '[[:digit:].]\+')"
+          version="$(grep 'VERSION =' ${{ github.workspace }}/version.bzl | grep -o '[[:digit:]][[:alnum:].+-]*')"
           echo "RELEASE_VERSION=${version}" >> $GITHUB_ENV
           echo "release_version=${version}" >> $GITHUB_OUTPUT
       - name: Comment out module overrides in .bazelrc files
