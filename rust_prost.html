@@ -165,13 +165,7 @@ using <a href="https://github.com/tokio-rs/prost">Prost</a> and <a href="https:/
 <li><a href="#rust_prost_toolchain">rust_prost_toolchain</a></li>
 </ul>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
-<pre><code class="language-python">load("@rules_rust//proto/prost:repositories.bzl", "rust_prost_dependencies")
-
-rust_prost_dependencies()
-
-load("@rules_rust//proto/prost:transitive_repositories.bzl", "rust_prost_transitive_repositories")
-
-rust_prost_transitive_repositories()
+<pre><code class="language-python">bazel_dep(name = "rules_rust_prost", version = "{SEE_RELEASE_NOTES}")
 </code></pre>
 <p>The <code>prost</code> and <code>tonic</code> rules do not specify a default toolchain in order to avoid mismatched
 dependency issues. To setup the <code>prost</code> and <code>tonic</code> toolchain, please see the section
@@ -233,7 +227,7 @@ load("@rules_rust//rust:defs.bzl", "rust_library_group")
 rust_library_group(
     name = "prost_runtime",
     deps = [
-        "@crates_io//:prost",
+        "@crates_io//prost",
     ],
 )
 
@@ -241,17 +235,17 @@ rust_library_group(
     name = "tonic_runtime",
     deps = [
         ":prost_runtime",
-        "@crates_io//:tonic",
+        "@crates_io//tonic",
     ],
 )
 
 rust_prost_toolchain(
     name = "prost_toolchain_impl",
-    prost_plugin = "@crates_io//:protoc-gen-prost__protoc-gen-prost",
+    prost_plugin = "@crates_io//protoc-gen-prost__protoc-gen-prost",
     prost_runtime = ":prost_runtime",
-    prost_types = "@crates_io//:prost-types",
+    prost_types = "@crates_io//prost-types",
     proto_compiler = "@com_google_protobuf//:protoc",
-    tonic_plugin = "@crates_io//:protoc-gen-tonic__protoc-gen-tonic",
+    tonic_plugin = "@crates_io//protoc-gen-tonic__protoc-gen-tonic",
     tonic_runtime = ":tonic_runtime",
 )
 
@@ -261,7 +255,7 @@ toolchain(
     toolchain_type = "@rules_rust//proto/prost:toolchain_type",
 )
 </code></pre>
-<p>Lastly, you must register the toolchain in your <code>WORKSPACE</code> file. For example:</p>
+<p>Lastly, you must register the toolchain in your <code>MODULE.bazel</code> file. For example:</p>
 <pre><code class="language-python">register_toolchains("//toolchains:prost_toolchain")
 </code></pre>
 <hr />
@@ -362,7 +356,7 @@ actions with minimal impact to other consumers.</p>
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="rust_protobuf.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="rust_pyo3.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -376,7 +370,7 @@ actions with minimal impact to other consumers.</p>
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="rust_protobuf.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="rust_pyo3.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

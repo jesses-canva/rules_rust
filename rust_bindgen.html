@@ -165,7 +165,6 @@
 <li><a href="#rust_bindgen_toolchain">rust_bindgen_toolchain</a></li>
 </ul>
 <h2 id="setup"><a class="header" href="#setup">Setup</a></h2>
-<h3 id="bzlmod"><a class="header" href="#bzlmod">Bzlmod</a></h3>
 <p>To use the Rust bindgen rules, add the following to your <code>MODULE.bazel</code> file:</p>
 <pre><code class="language-python">bazel_dep(name = "rules_rust_bindgen", version = "{SEE_RELEASE_NOTES}")
 </code></pre>
@@ -175,23 +174,10 @@ You need to register either your own or the default toolchain by adding the foll
 </code></pre>
 <p>The default toolchain builds libclang from source via the <a href="https://registry.bazel.build/modules/llvm-project">llvm-project</a> bazel_dep.
 <a href="https://github.com/bazelbuild/rules_rust/tree/main/examples/bindgen_toolchain">examples/bindgen_toolchain</a> shows how to use a prebuilt libclang.</p>
-<h3 id="workspace"><a class="header" href="#workspace">Workspace</a></h3>
-<p>Or add the following if you're still using <code>WORKSPACE</code> to add the
-external repositories for the Rust bindgen toolchain (in addition to the <a href="https://bazelbuild.github.io/rules_rust/#setup">rust rules setup</a>):</p>
-<pre><code class="language-python">load("@rules_rust_bindgen//:repositories.bzl", "rust_bindgen_dependencies", "rust_bindgen_register_toolchains")
-
-rust_bindgen_dependencies()
-
-rust_bindgen_register_toolchains()
-
-load("@rules_rust_bindgen//:transitive_repositories.bzl", "rust_bindgen_transitive_dependencies")
-
-rust_bindgen_transitive_dependencies()
-</code></pre>
 <p>Bindgen aims to be as hermetic as possible so will end up building <code>libclang</code> from <a href="https://github.com/llvm/llvm-project">llvm-project</a> from
-source. If this is found to be undesirable then no Bindgen related calls should be added to your WORKSPACE and instead
-users should define their own repositories using something akin to <a href="https://bazelbuild.github.io/rules_rust/crate_universe_workspace.html">crate_universe</a> and define their own
-toolchains following the instructions for <a href="#rust_bindgen_toolchain">rust_bindgen_toolchain</a>.</p>
+source. If this is found to be undesirable, users should define their own repositories using something akin to
+<a href="https://bazelbuild.github.io/rules_rust/crate_universe_bzlmod.html">crate_universe</a> and define their own toolchains following the instructions for
+<a href="#rust_bindgen_toolchain">rust_bindgen_toolchain</a>.</p>
 <hr />
 <hr />
 <p><a id="rust_bindgen"></a></p>
@@ -249,7 +235,7 @@ For additional information, see the <a href="https://docs.bazel.build/versions/m
 <tr><td style="text-align: left"><a id="rust_bindgen_toolchain-bindgen"></a>bindgen</td><td style="text-align: left">The label of a <code>bindgen</code> executable.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="rust_bindgen_toolchain-clang"></a>clang</td><td style="text-align: left">The label of a <code>clang</code> executable.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="rust_bindgen_toolchain-default_rustfmt"></a>default_rustfmt</td><td style="text-align: left">If set, <code>rust_bindgen</code> targets will always format generated sources with <code>rustfmt</code>.</td><td style="text-align: left">Boolean</td><td style="text-align: left">optional</td><td style="text-align: left"><code>True</code></td></tr>
-<tr><td style="text-align: left"><a id="rust_bindgen_toolchain-libclang"></a>libclang</td><td style="text-align: left">A cc_library that provides bindgen's runtime dependency on libclang.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
+<tr><td style="text-align: left"><a id="rust_bindgen_toolchain-libclang"></a>libclang</td><td style="text-align: left">A cc_library providing bindgen's runtime dependency on libclang. This attribute is required for hermeticity when bindgen is dynamically linked. If None, bindgen must be statically linked; else, system libraries will be used instead.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 <tr><td style="text-align: left"><a id="rust_bindgen_toolchain-libstdcxx"></a>libstdcxx</td><td style="text-align: left">A cc_library that satisfies libclang's libstdc++ dependency. This is used to make the execution of clang hermetic. If None, system libraries will be used instead.</td><td style="text-align: left"><a href="https://bazel.build/concepts/labels">Label</a></td><td style="text-align: left">optional</td><td style="text-align: left"><code>None</code></td></tr>
 </tbody></table>
 </div>
