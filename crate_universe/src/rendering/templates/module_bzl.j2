@@ -16,11 +16,10 @@ Expected length = 6 lines
 """
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@rules_rust//crate_universe:defs.bzl", "crates_vendor_remote_repository", "local_crate_mirror")
-load("@rules_rust//crate_universe/private:http_archive_with_subdirectory.bzl", "http_archive_with_subdirectory")
+load("@rules_rust//crate_universe/private:http_archive_symlink_strip_prefix.bzl", "http_archive_symlink_strip_prefix")
 
 ###############################################################################
 # MACROS API

@@ -377,7 +377,6 @@ There are some more examples of using crate_universe with bzlmod in the [example
 load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:structs.bzl", "structs")
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(
     "//crate_universe/private:common_utils.bzl",
     "new_cargo_bazel_fn",
@@ -403,8 +402,8 @@ load(
     generate_render_config = "render_config",
 )
 load(
-    "//crate_universe/private:http_archive_with_subdirectory.bzl",
-    "http_archive_with_subdirectory",
+    "//crate_universe/private:http_archive_symlink_strip_prefix.bzl",
+    "http_archive_symlink_strip_prefix",
 )
 load("//crate_universe/private:local_crate_mirror.bzl", "local_crate_mirror")
 load(
@@ -753,12 +752,7 @@ def _generate_hub_and_spokes(
             # Replicates functionality in repo_http.j2.
             build_file_content = module_ctx.read(crates_dir.get_child("BUILD.%s-%s.bazel" % (name, version)))
             repo = repo["Http"]
-            archive_rule = http_archive
-            archive_kwargs = {}
-            if repo.get("crate_subdirectory", None):
-                archive_rule = http_archive_with_subdirectory
-                archive_kwargs["crate_subdirectory"] = repo["crate_subdirectory"]
-            archive_rule(
+            http_archive_symlink_strip_prefix(
                 name = crate_repo_name,
                 patch_args = repo.get("patch_args", None),
                 patch_tool = repo.get("patch_tool", None),
@@ -769,7 +763,6 @@ def _generate_hub_and_spokes(
                 urls = [repo["url"]],
                 strip_prefix = repo.get("strip_prefix", "%s-%s" % (crate["name"], crate["version"])),
                 build_file_content = build_file_content,
-                **archive_kwargs
             )
         elif "Git" in repo:
             # Replicates functionality in repo_git.j2
