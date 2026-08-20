@@ -1647,6 +1647,49 @@ mod test {
     }
 
     #[test]
+    fn render_http_archive_subdirectory_repository() {
+        let mut context = Context::default();
+        let crate_id = CrateId::new("mock_crate".to_owned(), VERSION_ZERO_ONE_ZERO);
+        context.crates.insert(
+            crate_id.clone(),
+            CrateContext {
+                name: crate_id.name,
+                version: crate_id.version,
+                package_url: None,
+                repository: Some(SourceAnnotation::Http {
+                    url: "https://github.com/example/repo/archive/commit.tar.gz".to_owned(),
+                    sha256: Some("0123456789abcdef".to_owned()),
+                    strip_prefix: Some("repo-commit".to_owned()),
+                    crate_subdirectory: Some("path/to/crate".to_owned()),
+                    patch_args: None,
+                    patch_tool: None,
+                    patches: None,
+                }),
+                targets: BTreeSet::from([Rule::Library(mock_target_attributes())]),
+                library_target_name: None,
+                common_attrs: CommonAttributes::default(),
+                build_script_attrs: None,
+                license: None,
+                license_ids: BTreeSet::default(),
+                license_file: None,
+                additive_build_file_content: None,
+                disable_pipelining: false,
+                extra_aliased_targets: BTreeMap::default(),
+                alias_rule: None,
+                override_targets: BTreeMap::default(),
+            },
+        );
+
+        let renderer = Renderer::new(mock_render_config(None), mock_supported_platform_triples());
+        let output = renderer.render(&context, None).unwrap();
+        let crates_module = output.get(&PathBuf::from("crates.bzl")).unwrap();
+
+        assert!(crates_module.contains("http_archive_with_subdirectory,"));
+        assert!(crates_module.contains("crate_subdirectory = \"path/to/crate\","));
+        assert!(crates_module.contains("strip_prefix = \"repo-commit\","));
+    }
+
+    #[test]
     fn render_crate_edition() {
         let mut context = Context::default();
         let crate_id = CrateId::new("mock_crate".to_owned(), VERSION_ZERO_ONE_ZERO);

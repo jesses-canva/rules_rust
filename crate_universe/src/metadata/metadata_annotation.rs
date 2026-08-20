@@ -159,6 +159,10 @@ pub(crate) enum SourceAnnotation {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         strip_prefix: Option<String>,
 
+        /// The package directory to expose as the repository root after extracting the archive.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        crate_subdirectory: Option<String>,
+
         /// See [http_archive::patch_args](https://docs.bazel.build/versions/main/repo/http.html#http_archive-patch_args)
         #[serde(default, skip_serializing_if = "Option::is_none")]
         patch_args: Option<Vec<String>>,
@@ -282,6 +286,7 @@ impl LockfileAnnotation {
                         url: info.url,
                         sha256: Some(info.sha256),
                         strip_prefix: None,
+                        crate_subdirectory: None,
                         patch_args: None,
                         patch_tool: None,
                         patches: None,
@@ -352,14 +357,11 @@ impl LockfileAnnotation {
 
             // For GitHub repositories with a resolved commit, use http_archive
             // with a GitHub archive URL instead of git_repository for better
-            // hermeticity and caching.
+            // hermeticity and caching. Keep the package subdirectory separate
+            // from the archive prefix so files outside the package remain available.
             if let Some((owner, repo)) = Self::parse_github_owner_and_repo(&remote) {
                 if let Some(commit) = source.precise() {
                     let archive_prefix = format!("{}-{}", repo, commit);
-                    let http_strip_prefix = match &git_strip_prefix {
-                        Some(sub_path) => format!("{}/{}", archive_prefix, sub_path),
-                        None => archive_prefix,
-                    };
                     let url = format!(
                         "https://github.com/{}/{}/archive/{}.tar.gz",
                         owner, repo, commit
@@ -369,7 +371,8 @@ impl LockfileAnnotation {
                     return Ok(SourceAnnotation::Http {
                         url,
                         sha256: Some(sha256),
-                        strip_prefix: Some(http_strip_prefix),
+                        strip_prefix: Some(archive_prefix),
+                        crate_subdirectory: git_strip_prefix,
                         patch_args: None,
                         patch_tool: None,
                         patches: None,
@@ -398,6 +401,7 @@ impl LockfileAnnotation {
                 url: info.url,
                 sha256: Some(info.sha256),
                 strip_prefix: None,
+                crate_subdirectory: None,
                 patch_args: None,
                 patch_tool: None,
                 patches: None,
@@ -426,6 +430,7 @@ impl LockfileAnnotation {
                     })
                     .map(|sum| sum.encode_hex::<String>()),
                 strip_prefix: None,
+                crate_subdirectory: None,
                 patch_args: None,
                 patch_tool: None,
                 patches: None,
@@ -704,6 +709,7 @@ mod test {
 
     #[test]
     fn detects_strip_prefix_for_git_repo() {
+        let _ = rustls::crypto::ring::default_provider().install_default();
         let metadata = &test::metadata::git_repos();
         let crates = LockfileAnnotation::new(
             &None,
@@ -722,16 +728,18 @@ mod test {
         match tracing_core {
             SourceAnnotation::Http {
                 strip_prefix: Some(strip_prefix),
+                crate_subdirectory: Some(crate_subdirectory),
                 url,
                 ..
-            } if strip_prefix.ends_with("/tracing-core")
+            } if strip_prefix.starts_with("tracing-")
+                && crate_subdirectory == "tracing-core"
                 && url.starts_with("https://github.com/tokio-rs/tracing/archive/") =>
             {
-                // GitHub git deps are converted to http_archive with the
-                // git strip_prefix appended to the archive strip_prefix.
+                // The archive retains the full repository while exposing the
+                // nested package as the generated repository root.
             }
             other => {
-                panic!("Wanted SourceAnnotation::Http with strip_prefix ending in '/tracing-core' and GitHub archive URL, got: {:?}", other);
+                panic!("Wanted SourceAnnotation::Http for the tracing archive with crate_subdirectory == Some(\"tracing-core\"), got: {:?}", other);
             }
         }
     }

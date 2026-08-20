@@ -1,6 +1,13 @@
     maybe(
+    {%- if attrs | get(key="crate_subdirectory", default=Null) %}
+        http_archive_with_subdirectory,
+    {%- else %}
         http_archive,
+    {%- endif %}
         name = "{{ crate_repository(name = crate.name, version = crate.version) }}",
+    {%- if attrs | get(key="crate_subdirectory", default=Null) %}
+        crate_subdirectory = "{{ attrs.crate_subdirectory }}",
+    {%- endif %}
     {%- if attrs | get(key="patch_args", default=Null) %}
         patch_args = [
     {%- for arg in attrs.patch_args %}

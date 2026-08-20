@@ -402,6 +402,10 @@ load(
     "execute_generator",
     generate_render_config = "render_config",
 )
+load(
+    "//crate_universe/private:http_archive_with_subdirectory.bzl",
+    "http_archive_with_subdirectory",
+)
 load("//crate_universe/private:local_crate_mirror.bzl", "local_crate_mirror")
 load(
     "//crate_universe/private:splicing_utils.bzl",
@@ -749,7 +753,12 @@ def _generate_hub_and_spokes(
             # Replicates functionality in repo_http.j2.
             build_file_content = module_ctx.read(crates_dir.get_child("BUILD.%s-%s.bazel" % (name, version)))
             repo = repo["Http"]
-            http_archive(
+            archive_rule = http_archive
+            archive_kwargs = {}
+            if repo.get("crate_subdirectory", None):
+                archive_rule = http_archive_with_subdirectory
+                archive_kwargs["crate_subdirectory"] = repo["crate_subdirectory"]
+            archive_rule(
                 name = crate_repo_name,
                 patch_args = repo.get("patch_args", None),
                 patch_tool = repo.get("patch_tool", None),
@@ -760,6 +769,7 @@ def _generate_hub_and_spokes(
                 urls = [repo["url"]],
                 strip_prefix = repo.get("strip_prefix", "%s-%s" % (crate["name"], crate["version"])),
                 build_file_content = build_file_content,
+                **archive_kwargs
             )
         elif "Git" in repo:
             # Replicates functionality in repo_git.j2
