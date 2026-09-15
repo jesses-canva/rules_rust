@@ -93,7 +93,10 @@ rust_binary(
     edition = "2021",
     version = VERSION,
     visibility = ["//visibility:public"],
-    deps = [":cargo_bazel"],
+    deps = [
+        ":cargo_bazel",
+        "//crate_universe/3rdparty/crates:rustls",
+    ],
 )
 
 alias(

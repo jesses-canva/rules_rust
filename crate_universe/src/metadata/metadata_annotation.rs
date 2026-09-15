@@ -353,6 +353,11 @@ impl LockfileAnnotation {
             // For GitHub repositories with a resolved commit, use http_archive
             // with a GitHub archive URL instead of git_repository for better
             // hermeticity and caching.
+            //
+            // Use codeload.github.com rather than the www archive route: the
+            // latter ignores `Authorization` and returns 404 for private
+            // repos, whereas codeload honours it. Both serve byte-identical
+            // archives with the same `{repo}-{commit}/` prefix.
             if let Some((owner, repo)) = Self::parse_github_owner_and_repo(&remote) {
                 if let Some(commit) = source.precise() {
                     let archive_prefix = format!("{}-{}", repo, commit);
@@ -361,7 +366,7 @@ impl LockfileAnnotation {
                         None => archive_prefix,
                     };
                     let url = format!(
-                        "https://github.com/{}/{}/archive/{}.tar.gz",
+                        "https://codeload.github.com/{}/{}/tar.gz/{}",
                         owner, repo, commit
                     );
                     let sha256 = Self::fetch_sha256(http_client, &url)
@@ -488,7 +493,11 @@ impl LockfileAnnotation {
 
     /// Fetch the content at `url` and return its SHA-256 hex digest.
     fn fetch_sha256(http_client: &Client, url: &str) -> Result<String> {
-        let mut response = http_client.get(url).send()?.error_for_status()?;
+        let mut request = http_client.get(url);
+        if let Ok(token) = std::env::var("GITHUB_TOKEN") {
+            request = request.header("Authorization", format!("token {}", token));
+        }
+        let mut response = request.send()?.error_for_status()?;
         let mut hasher = Sha256::new();
         let mut buffer = [0u8; 8192];
         loop {
@@ -725,7 +734,7 @@ mod test {
                 url,
                 ..
             } if strip_prefix.ends_with("/tracing-core")
-                && url.starts_with("https://github.com/tokio-rs/tracing/archive/") =>
+                && url.starts_with("https://codeload.github.com/tokio-rs/tracing/tar.gz/") =>
             {
                 // GitHub git deps are converted to http_archive with the
                 // git strip_prefix appended to the archive strip_prefix.
@@ -759,7 +768,7 @@ mod test {
             SourceAnnotation::Http { url, .. } => {
                 assert_eq!(
                     *url,
-                    "https://github.com/tokio-rs/tracing/archive/1e09e50e8d15580b5929adbade9c782a6833e4a0.tar.gz"
+                    "https://codeload.github.com/tokio-rs/tracing/tar.gz/1e09e50e8d15580b5929adbade9c782a6833e4a0"
                 );
             }
             other => panic!(
